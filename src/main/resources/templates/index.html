@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="id" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CloudPick – SPK Vendor Cloud (AHP dan SAW)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div class="frame">
+<nav><a class="logo" href="#top">cloud<i>pick</i></a><a class="l" href="#why">Metode</a><a class="l" href="#hasil">Peringkat</a><a class="l" href="#kalk">Kalkulator</a><a class="l" href="#sens">Sensitivitas</a><span class="sp"></span><a class="btn" href="#kalk">Mulai evaluasi</a></nav>
+
+<header class="hero" id="top">
+<svg viewBox="0 0 800 430" preserveAspectRatio="none" aria-hidden="true"><path d="M0 250 Q140 170 260 215 T520 190 L520 262 L0 270Z" fill="#2f7a49" opacity=".85"/><path d="M0 430 L0 300 Q150 250 330 330 T800 400 L800 430Z" fill="#1c4d2c"/><path d="M560 262 Q640 230 800 250 L800 292 L560 300Z" fill="#1d5a8c" opacity=".7"/><rect x="100" y="285" width="46" height="26" fill="#b9a487"/><path d="M96 285 L123 262 L150 285Z" fill="#6b4f3a"/></svg>
+<h1>CLOUD<sup>.id</sup></h1>
+<p>Pilih vendor cloud dengan perhitungan, bukan perasaan. AHP menentukan bobot kriteria, SAW meranking vendor.</p>
+<div class="b"><a class="btn" href="#kalk">Atur penilaian</a><a class="btn o" href="#hasil">Lihat peringkat</a></div>
+</header>
+
+<section class="sec why" id="why">
+<div><h2>Kenapa memadukan AHP dan SAW?</h2><p>AHP mengubah perbandingan antar-kriteria menjadi bobot dan memeriksa konsistensinya. SAW memakai bobot itu untuk menilai tiap vendor dengan rumus sederhana yang mudah ditelusuri.</p>
+<div class="stats"><div class="stat"><i>5</i><b>5</b>Kriteria penilaian</div><div class="stat"><i>V</i><b th:text="${vendors.size()}">5</b>Vendor dibandingkan</div><div class="stat"><i>CR</i><b th:text="${crPct + '%'}">0,74%</b>Rasio konsistensi</div></div></div>
+<div class="feat">
+<div class="fc"><div class="ic">AHP</div><div><b>Bobot yang konsisten</b><span>Valid bila CR kurang dari atau sama dengan 10%.</span></div></div>
+<div class="fc"><div class="ic">SAW</div><div><b>Peringkat yang transparan</b><span>Normalisasi benefit dan cost, lalu jumlahkan bobot × nilai.</span></div></div>
+<div class="fc"><div class="ic">±</div><div><b>Uji sensitivitas</b><span>Lihat apakah peringkat berubah saat prioritas bergeser.</span></div></div>
+</div></section>
+
+<section class="sec" id="hasil"><div class="panel">
+<div class="ph"><h2>Peringkat vendor</h2><p>Nilai preferensi dihitung ulang setiap kali matriks kriteria atau nilai vendor disimpan.</p></div>
+<div class="vc" id="cards">
+<div class="v" th:each="c : ${cards}" th:style="'background:' + ${c.grad()}">
+<span class="rk" th:text="'#' + ${c.rank()}">#1</span><span class="tag" th:text="'US$' + ${c.cost()} + '/bln'">US$95/bln</span>
+<h3 th:text="${c.name()}">AWS</h3><small th:text="'V = ' + ${c.score()}">V = 0,9488</small>
+<div class="bar"><i th:style="'width:' + ${#numbers.formatDecimal(c.pct(),1,'NONE',1,'POINT')} + '%'"></i></div><small th:text="${c.label()}">Rekomendasi utama</small>
+</div></div>
+<div class="nav2"><a class="btn" href="#kalk">Ubah penilaian</a><div class="ar"><button type="button" id="pv" aria-label="Geser kiri">‹</button><button type="button" id="nx" aria-label="Geser kanan">›</button></div></div>
+</div></section>
+
+<section class="sec"><h2>Evaluasi semudah 1-2-3</h2>
+<div class="steps"><div class="st"><b>1. Bandingkan kriteria</b><span>Isi matriks perbandingan berpasangan dan cek CR.</span></div><div class="st"><b>2. Isi nilai vendor</b><span>Biaya dalam USD per bulan, kriteria lain skala 1 sampai 10.</span></div><div class="st"><b>3. Baca hasilnya</b><span>Lihat peringkat, perhitungan, dan uji sensitivitas.</span></div></div></section>
+
+<section class="sec" id="kalk"><h2>Kalkulator AHP dan SAW</h2>
+<div class="flash" th:if="${error}" th:text="${error}" role="alert"></div>
+<div class="grid2">
+<div class="box"><b>1. Perbandingan berpasangan kriteria</b>
+<p class="note">Pilih seberapa penting kriteria kiri dibanding kanan. 9 = mutlak lebih penting, 1 = sama, 1/9 = jauh kurang penting.</p>
+<form method="post" th:action="@{/matriks}">
+<div class="pr" th:each="p : ${pairs}"><span th:text="${p.a()}">Biaya</span>
+<select th:name="'p_' + ${p.i()} + '_' + ${p.j()}" th:attr="aria-label=${p.a() + ' dibanding ' + p.b()}"><option th:each="o : ${opts}" th:value="${o.value()}" th:text="${o.label()}" th:selected="${o.label() == p.cur()}"></option></select>
+<span th:text="${p.b()}">Keandalan</span></div>
+<button class="btn" style="margin-top:12px">Hitung bobot</button>
+<button class="btn g" th:formaction="@{/reset/matriks}" formnovalidate>Kembalikan ke bawaan</button>
+</form></div>
+<div class="box"><b>Hasil AHP</b>
+<div style="margin-top:8px"><div class="wrow" th:each="w : ${wrows}"><div class="t"><span th:text="${w.code() + ' ' + w.name()}">C1 Biaya</span><b th:text="${w.pct() + '%'}">12,15%</b></div><div class="track"><i th:style="'width:' + ${#numbers.formatDecimal(w.bar(),1,'NONE',1,'POINT')} + '%'"></i></div></div></div>
+<div class="kv"><span>λmaks <b th:text="${lambda}"></b></span><span>CI <b th:text="${ci}"></b></span><span>CR <b th:text="${cr}"></b></span><span class="badge" th:classappend="${consistent} ? 'ok' : 'no'" th:text="${consistent} ? 'Konsisten' : 'Tidak konsisten'"></span></div>
+<div class="warn" th:unless="${consistent}">CR di atas 0,10. Perbaiki perbandingan kriteria sebelum memakai hasilnya.</div>
+</div></div>
+
+<div class="box" style="margin-top:20px"><b>2. Nilai vendor (matriks keputusan X)</b>
+<div class="tw"><table>
+<tr><th>Vendor</th><th>C1 Biaya (USD/bln)</th><th>C2 Keandalan &amp; SLA</th><th>C3 Keamanan &amp; Kepatuhan</th><th>C4 Performa &amp; Skalabilitas</th><th>C5 Dukungan &amp; Ekosistem</th><th>Aksi</th></tr>
+<tr th:each="v, st : ${vendors}"><td th:text="${v.name()}">AWS</td>
+<td th:each="j : ${#numbers.sequence(0,4)}"><input type="number" step="any" min="0" th:name="'k' + ${j + 1}" th:value="${v.x()[j]}" th:attr="form='vf' + ${st.index},aria-label=${v.name() + ' C' + (j + 1)}"></td>
+<td><form class="vf" method="post" th:id="'vf' + ${st.index}" th:action="@{/vendor/ubah}"><input type="hidden" name="idx" th:value="${st.index}"><button class="btn g">Simpan</button><button class="btn g" th:formaction="@{/vendor/hapus}" formnovalidate>Hapus</button></form></td></tr>
+</table></div>
+<form method="post" th:action="@{/vendor/tambah}" class="add">
+<input type="text" name="name" placeholder="Nama vendor" aria-label="Nama vendor" required>
+<input type="number" step="any" name="k1" placeholder="USD/bln" required><input type="number" step="any" name="k2" placeholder="C2" min="1" max="10" required><input type="number" step="any" name="k3" placeholder="C3" min="1" max="10" required><input type="number" step="any" name="k4" placeholder="C4" min="1" max="10" required><input type="number" step="any" name="k5" placeholder="C5" min="1" max="10" required>
+<button class="btn">Tambah</button></form>
+<p class="note">Seluruh nilai bawaan adalah data simulasi. C1 = estimasi biaya untuk 1 VM 2 vCPU 8 GB RAM, 100 GB penyimpanan, 500 GB transfer keluar per bulan. Ganti dengan data resmi vendor sebelum dipakai.</p>
+<form method="post" th:action="@{/reset/vendor}"><button class="btn g">Reset vendor</button></form></div>
+
+<div class="box" style="margin-top:20px"><b>3. Perhitungan SAW</b>
+<div class="warn" th:unless="${consistent}">Bobot belum valid karena CR di atas 0,10. Peringkat di bawah hanya sementara.</div>
+<div class="tw"><table>
+<tr><th>Peringkat</th><th>Vendor</th><th th:each="j : ${#numbers.sequence(0,4)}" th:text="${codes[j] + ' (w=' + weightText[j] + ')'}"></th><th>V</th></tr>
+<tr th:each="r : ${rrows}" th:classappend="${r.top()} ? 'top'"><td th:text="${r.rank()}"></td><td th:text="${r.name()}"></td><td th:each="c : ${r.contrib()}" th:text="${c}"></td><td><b th:text="${r.score()}"></b></td></tr>
+</table></div>
+<details><summary>Matriks normalisasi (R)</summary><div class="tw"><table>
+<tr><th>Vendor</th><th th:each="c : ${codes}" th:text="${c}"></th></tr>
+<tr th:each="n : ${nrows}"><td th:text="${n.name()}"></td><td th:each="x : ${n.r()}" th:text="${x}"></td></tr>
+</table></div><p class="note">Cost: r = min(x) / x. Benefit: r = x / max(x). Nilai preferensi: V = Σ w × r.</p></details></div>
+</section>
+
+<section class="sec" id="sens"><h2>Analisis sensitivitas</h2><div class="box"><div class="tw"><table>
+<tr><th>Skenario</th><th>Bobot C1 sampai C5</th><th>Peringkat 1</th><th>Peringkat 2</th><th>Peringkat 3</th></tr>
+<tr th:each="s : ${srows}"><td th:text="${s.name()}"></td><td th:text="${s.weights()}"></td><td th:each="t : ${s.top()}" th:text="${t}"></td></tr>
+</table></div><p class="note" th:text="${changed}"></p></div></section>
+<footer>CloudPick · Tugas Sistem Penunjang Keputusan · Universitas Tarumanagara 2025/2026</footer>
+</div>
+<script>
+document.getElementById('pv').onclick=()=>document.getElementById('cards').scrollBy({left:-230,behavior:'smooth'});
+document.getElementById('nx').onclick=()=>document.getElementById('cards').scrollBy({left:230,behavior:'smooth'});
+</script>
+</body>
+</html>
